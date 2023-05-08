@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import heapq
+import random
 from numpy.linalg import pinv,inv,matrix_rank
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
@@ -26,9 +26,29 @@ def generate_data(num):
             y_list.append(-1)
         else:
             y_list.append(1)
+    r_idx = []
+    for i in range(50):
+        r = random.randint(0,500)
+        r_idx.append(r)
+    train_x = []
+    train_y = []
+    test_x = []
+    test_y = []
+    
+    for i in range(500):
+        if i in r_idx:
+            train_x.append(x_list[i])        
+            train_y.append(y_list[i])
+            plt.plot(x[i],y[i],'o',color='red',markersize=2.0)
+        else:
+            test_x.append(x_list[i])
+            test_y.append(y_list[i])
+            plt.plot(x[i],y[i],'o',color='blue',markersize=2.0)
 
-    return x_list,y_list 
-def five_fold(x,y):
+    plt.show()
+    return train_x,train_y,test_x,test_y
+
+def five_fold(x,y,tx,ty):
     accuracy_without_scaling = []
     kf = KFold(5)
     for i,(train_idx,test_idx) in enumerate(kf.split(x)):
@@ -47,23 +67,14 @@ def five_fold(x,y):
     accuracy_without_scaling.sort(reverse = True)
 
     accuracy = []
-    train_x = [x[i] for i in range(len(x)) if i in train_idx]
-    train_y = [y[i] for i in range(len(y)) if i in train_idx]
 
-    test_x = [x[i] for i in range(len(x)) if i in test_idx]
-    test_y = [y[i] for i in range(len(y)) if i in test_idx]
-    
     for i in range(len(train_x)):
         for k,v in train_x[i].items():
-            train_x[i][k] = v/10
-
-    for i in range(len(test_x)):
-        for k,v in test_x[i].items():
-            test_x[i][k] = v/10
+            x[i][k] = v/10
 
     params = f'-c {accuracy_without_scaling[0][1]} -g {accuracy_without_scaling[0][2]}'
-    m = svm_train(train_y,train_x,params)
-    _,p_acc,_ = svm_predict(test_y,test_x,m)
+    m = svm_train(y,x,params)
+    _,p_acc,_ = svm_predict(y,x,m)
     accuracy.append([p_acc[0],accuracy_without_scaling[0][1],accuracy_without_scaling[0][2],i])
 
     print (f'Top 3 accuracy without scaling')
